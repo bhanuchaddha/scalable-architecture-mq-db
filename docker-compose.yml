@@ -1,0 +1,59 @@
+version: "3"
+
+services:
+  task-service:
+    build: .
+    image: task-service:latest
+    environment:
+      - MONGODB_URI=mongodb://my-mongodb:27017/mydb
+      - REDIS_HOST=redis
+    depends_on:
+      - database
+      - redis
+    ports:
+      - 6543:6543
+    expose:
+      - 6543
+    networks:
+      - task_network
+
+  knapsack-service:
+    build: .
+    image: knapsack-service:latest
+    environment:
+      - MONGODB_URI=mongodb://my-mongodb:27017/mydb
+      - REDIS_HOST=redis
+    depends_on:
+      - database
+      - redis
+      - task-service
+    networks:
+      - task_network
+
+  database:
+    container_name: my-mongodb
+    image: mongo:4.0.4
+    environment:
+      - MONGO_DATA_DIR=/data/db
+      - MONGO_LOG_DIR=/dev/null
+    volumes:
+      - ./data/db:/data/db
+    ports:
+      - 27017:27017
+    command: mongod --smallfiles --logpath=/dev/null # --quiet
+    networks:
+      - task_network
+
+  redis:
+    image: "redis:alpine"
+    container_name: redis
+    hostname: redis
+    ports:
+      - 6379:6379
+    networks:
+      - task_network
+
+
+networks:
+  task_network:
+    driver: bridge
