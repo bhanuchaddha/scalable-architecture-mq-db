@@ -1,4 +1,4 @@
-# Scalable Architecture
+# Scalable Architecture - Bhanu Chaddha
 
 I have understood this problem to designing a scalable, asynchronous architecture, which can be scaled easily to execute high volume of longer running tasks. 
 The task is Kanapsack in this case. But can be replaces by any other problem easily if needed.
@@ -80,6 +80,17 @@ This Architecture has below elements
 2. task-service persist the task with `submitted` status and publish the task on Task Queue.
 3. knapsack-service pick the task and update the task status to `started` in db.
 4. knapsack-service process the task and update the task status to `completed` in db along with solution.
+
+## Technology Stack
+- Java
+- Spring Boot
+- RxJava
+- Mongo Db
+- Redis Pub/Sub
+- Lombock
+- Rest Assured
+- Docker
+
 
 
 ## Features
