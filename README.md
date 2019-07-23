@@ -1,11 +1,13 @@
 # Scalable Architecture - Bhanu Chaddha
 
 I have understood this problem to designing a scalable, asynchronous architecture, which can be scaled easily to execute high volume of longer running tasks. 
-The task is Kanapsack in this case. But can be replaces by any other problem easily if needed.
+The task is Kanapsack in this case. But can be replaces by any other problem easily if needed. 
+
 
 ## Ideal Architecture
 
-I planed to design the architecture as below , but I have to take shortcut due to lack of time and technical issues, I faced with Cassandra and RabbitMq setup.
+I planed to design the architecture as below, but I had to take shortcut due to lack of time. I spent around 8 hours in total on this assignment.
+But quite some time was wasted on `Cassandra` and `RabbitMQ` container setup. At the end I decided to not use these and used MongoDB and Redis instead.
 
 ![Ideal Architecture](/image/idealArchitecture.png)
 
