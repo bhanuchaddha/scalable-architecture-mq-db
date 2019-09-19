@@ -6,10 +6,9 @@ services:
     image: task-service:latest
     environment:
       - MONGODB_URI=mongodb://my-mongodb:27017/mydb
-      - REDIS_HOST=redis
+      - KAFKA_URL=kafka:9092
     depends_on:
       - database
-      - redis
     ports:
       - 6543:6543
     expose:
@@ -22,10 +21,9 @@ services:
     image: knapsack-service:latest
     environment:
       - MONGODB_URI=mongodb://my-mongodb:27017/mydb
-      - REDIS_HOST=redis
+      - KAFKA_URL=kafka:9092
     depends_on:
       - database
-      - redis
       - task-service
     networks:
       - task_network
@@ -44,12 +42,51 @@ services:
     networks:
       - task_network
 
-  redis:
-    image: "redis:alpine"
-    container_name: redis
-    hostname: redis
+
+# Kafka require zookeeper for leader election
+  zookeeper:
+    image: wurstmeister/zookeeper
     ports:
-      - 6379:6379
+      - "2181:2181"
+    networks:
+      - task_network
+
+  kafka:
+    container_name: kafka
+    image: wurstmeister/kafka:2.12-2.2.1
+    environment:
+      ## the >- used below infers a value which is a string and properly
+      ## ignore the multiple lines resulting in one long string:
+      ## https://yaml.org/spec/1.2/spec.html
+      KAFKA_ADVERTISED_LISTENERS: >-
+        LISTENER_DOCKER_INTERNAL://kafka:19092,
+        LISTENER_DOCKER_EXTERNAL://${DOCKER_HOST_IP:-kafka}:9092
+
+      KAFKA_LISTENERS: >-
+        LISTENER_DOCKER_INTERNAL://:19092,
+        LISTENER_DOCKER_EXTERNAL://:9092
+
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: >-
+        LISTENER_DOCKER_INTERNAL:PLAINTEXT,
+        LISTENER_DOCKER_EXTERNAL:PLAINTEXT
+
+      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LOG4J_LOGGERS: >-
+        kafka.controller=INFO,
+        kafka.producer.async.DefaultEventHandler=INFO,
+        state.change.logger=INFO
+
+      KAFKA_CREATE_TOPICS: knapsack-topic:3:1,Topic2:1:1:compact
+
+    ports:
+      - 9092:9092
+    depends_on:
+      - zookeeper
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
     networks:
       - task_network
 
