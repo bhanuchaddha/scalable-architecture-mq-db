@@ -1,17 +1,17 @@
 package com.bhanuchaddha.architecture.knapsackservice.message;
 
-import com.bhanuchaddha.architecture.knapsackservice.dto.TaskDto;
-import com.bhanuchaddha.architecture.knapsackservice.tasks.TaskListener;
 import lombok.RequiredArgsConstructor;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
-import org.springframework.data.redis.listener.ChannelTopic;
-import org.springframework.data.redis.listener.RedisMessageListenerContainer;
-import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
-import redis.clients.jedis.JedisPoolConfig;
+import org.springframework.kafka.support.serializer.JsonDeserializer;
+
+import java.util.HashMap;
+import java.util.Map;
 
 
 @Configuration
@@ -19,40 +19,25 @@ import redis.clients.jedis.JedisPoolConfig;
 @RequiredArgsConstructor
 public class MessageListenerConfiguration {
 
-    private final TaskListener taskListener;
     private final MessagingProperties messagingProperties;
+    private final KafkaProperties kafkaProperties;
 
-    @Value("${spring.redis.host}")
-    private String host;
-    @Value("${spring.redis.port}")
-    private Integer port;
-
-    @Bean
-    public JedisConnectionFactory jedisConnectionFactory() {
-        JedisConnectionFactory factory = new JedisConnectionFactory();
-        factory.setHostName(host);
-        factory.setPort(port);
-        return factory;
-    }
-
-    @Bean
-    ChannelTopic topic() {
-        return new ChannelTopic(messagingProperties.getQueue());
-    }
+    @Value("${spring.kafka.consumer.group-id}")
+    private String knapsackGroupId;
 
 
     @Bean
-    MessageListenerAdapter messageListener( ) {
-        return new MessageListenerAdapter(taskListener);
-    }
+    public Map<String, Object> consumerConfigs() {
+        Map<String, Object> props = new HashMap<>(
+                kafkaProperties.buildConsumerProperties()
+        );
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
+                StringDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+                JsonDeserializer.class);
+        props.put(ConsumerConfig.GROUP_ID_CONFIG,
+                knapsackGroupId);
 
-    @Bean
-    RedisMessageListenerContainer redisContainer() {
-        RedisMessageListenerContainer container
-                = new RedisMessageListenerContainer();
-        container.setConnectionFactory(jedisConnectionFactory());
-        container.addMessageListener(messageListener(), topic());
-        container.setRecoveryInterval(2000000);
-        return container;
+        return props;
     }
 }

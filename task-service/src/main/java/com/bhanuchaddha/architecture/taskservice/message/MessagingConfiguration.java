@@ -1,15 +1,20 @@
 package com.bhanuchaddha.architecture.taskservice.message;
 
-import com.bhanuchaddha.architecture.taskservice.dto.TaskDto;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.listener.ChannelTopic;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
+import org.springframework.kafka.core.DefaultKafkaProducerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.core.ProducerFactory;
+import org.springframework.kafka.support.serializer.JsonSerializer;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 @EnableConfigurationProperties({MessagingProperties.class})
@@ -17,31 +22,31 @@ import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 public class MessagingConfiguration {
 
     private final MessagingProperties messagingProperties;
-
-
-    @Value("${spring.redis.host}")
-    private String host;
-    @Value("${spring.redis.port}")
-    private Integer port;
+    private final KafkaProperties kafkaProperties;
 
     @Bean
-    public JedisConnectionFactory jedisConnectionFactory() {
-        JedisConnectionFactory factory = new JedisConnectionFactory();
-        factory.setHostName(host);
-        factory.setPort(port);
-        return factory;
+    public Map<String, Object> producerConfigs() {
+        Map<String, Object> props =
+                new HashMap<>(kafkaProperties.buildProducerProperties());
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
+                StringSerializer.class);
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+                JsonSerializer.class);
+        return props;
     }
 
     @Bean
-    ChannelTopic topic() {
-        return new ChannelTopic(messagingProperties.getQueue());
+    public ProducerFactory<String, Object> producerFactory() {
+        return new DefaultKafkaProducerFactory<>(producerConfigs());
     }
 
     @Bean
-    public RedisTemplate<String, TaskDto> redisTemplate() {
-        final RedisTemplate<String, TaskDto> template = new RedisTemplate<String, TaskDto>();
-        template.setConnectionFactory(jedisConnectionFactory());
-        template.setValueSerializer(new Jackson2JsonRedisSerializer<TaskDto>(TaskDto.class));
-        return template;
+    public KafkaTemplate<String, Object> kafkaTemplate() {
+        return new KafkaTemplate<>(producerFactory());
+    }
+
+    @Bean
+    public NewTopic knapsackTopic() {
+        return new NewTopic(messagingProperties.getTopicName(), 3, (short) 1);
     }
 }

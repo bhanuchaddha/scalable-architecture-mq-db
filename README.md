@@ -181,3 +181,9 @@ $ curl -XGET -H http://localhost:6543/knapsack/nbd43jhb
 - Use of Interfaces
 - Swagger UI
 - Service Contract
+- Make generic architecture to handle more than one task
+
+
+## Reference
+### Kafka
+https://dev.to/thegroo/one-to-run-them-all-1mg6

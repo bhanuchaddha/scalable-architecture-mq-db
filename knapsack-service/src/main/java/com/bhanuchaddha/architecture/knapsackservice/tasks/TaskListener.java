@@ -5,37 +5,38 @@ import com.bhanuchaddha.architecture.knapsackservice.data.entity.Status;
 import com.bhanuchaddha.architecture.knapsackservice.dto.TaskDto;
 import com.bhanuchaddha.architecture.knapsackservice.knapsack.KnapsackService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.reactivex.Single;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.common.header.Headers;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.redis.connection.Message;
-import org.springframework.data.redis.connection.MessageListener;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.time.Clock;
+import java.util.stream.StreamSupport;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class TaskListener implements MessageListener {
+public class TaskListener  {
 
     private final TaskRepository repository;
     @Qualifier("cetClock")
     private final Clock clock;
     private final KnapsackService knapsackService;
+    private ObjectMapper mapper = new ObjectMapper();
 
 
-    private ObjectMapper objectMapper = new ObjectMapper();
-
-
-    public void onMessage(final Message message, final byte[] pattern) {
+    @KafkaListener(topics = "knapsack-topic", clientIdPrefix = "json",
+            containerFactory = "kafkaListenerContainerFactory")
+    public void listen(String task) {
         try {
+            TaskDto taskDto = mapper.readValue(task, TaskDto.class);
 
-            TaskDto task = objectMapper.readValue(message.toString(), TaskDto.class);
-
-            repository.findById(task.getTask())
+            repository.findById(taskDto.getTask())
                     .filter(t->t.getStatus().equals(Status.SUBMITTED)) // It will prevent the duplicated processing
                     .flatMapSingle(t-> repository.save(t.updateStatus(Status.STARTED,clock)))
                     .flatMap(knapsackService::solve)
@@ -43,11 +44,15 @@ public class TaskListener implements MessageListener {
                     .flatMap(t -> repository.save(t))
                     .doOnError(throwable -> log.error("Error while processing task", throwable))
                     .subscribe();
-
         } catch (IOException e) {
-            //TODO: Better exception handling
-            throw new RuntimeException("Message could not be parsed", e);
+            e.printStackTrace();
         }
-        log.info("Message received: " + new String(message.getBody()));
+
+    }
+
+    private static String typeIdHeader(Headers headers) {
+        return StreamSupport.stream(headers.spliterator(), false)
+                .filter(header -> header.key().equals("__TypeId__"))
+                .findFirst().map(header -> new String(header.value())).orElse("N/A");
     }
 }

@@ -4,8 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties("messaging")
+@ConfigurationProperties("knapsack")
 @Getter @Setter
 public class MessagingProperties {
-    private String queue;
+    private String topicName;
 }
