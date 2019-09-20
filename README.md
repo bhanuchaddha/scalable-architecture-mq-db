@@ -187,3 +187,14 @@ $ curl -XGET -H http://localhost:6543/knapsack/nbd43jhb
 ## Reference
 ### Kafka
 https://dev.to/thegroo/one-to-run-them-all-1mg6
+[Kafka Listener Explained](https://rmoff.net/2018/08/02/kafka-listeners-explained/)
+
+## Local Setup
+### Access kafka from outside docker
+```
+Docker for Mac (native)
+Docker for Mac is particularly problematic because of networking limitations. The solution is as follows:
+
+sudo ifconfig lo0 alias 10.200.10.1/24  # (where 10.200.10.1 is some unused IP address)
+export DOCKER_HOST_IP=10.200.10.1
+```
