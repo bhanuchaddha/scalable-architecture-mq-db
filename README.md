@@ -1,4 +1,4 @@
-# Scalable Architecture - Bhanu Chaddha
+# Scalable Architecture
 
 I have understood this problem to designing a scalable, asynchronous architecture, which can be scaled easily to execute high volume of longer running tasks. 
 The task is Kanapsack in this case. But can be replaces by any other problem easily if needed. 
@@ -197,4 +197,24 @@ Docker for Mac is particularly problematic because of networking limitations. Th
 
 sudo ifconfig lo0 alias 10.200.10.1/24  # (where 10.200.10.1 is some unused IP address)
 export DOCKER_HOST_IP=10.200.10.1
+```
+
+### Local docker registry 
+```
+docker run -d -p 5000:5000 --restart=always --name registry registry:2
+
+docker tag knapsack-service:latest bhanuchaddha/knapsack-service:latest
+
+docker push bhanuchaddha/knapsack-service:latest
+```
+
+## Kubernets
+### Create
+```
+kubectl create -f k8.yml
+```
+
+### Update
+```
+kubectl apply  -f k8.yml
 ```
