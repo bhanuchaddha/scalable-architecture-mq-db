@@ -184,12 +184,68 @@ $ curl -XGET -H http://localhost:6543/knapsack/nbd43jhb
 - Make generic architecture to handle more than one task
 
 
-## Reference
-### Kafka
-https://dev.to/thegroo/one-to-run-them-all-1mg6
-[Kafka Listener Explained](https://rmoff.net/2018/08/02/kafka-listeners-explained/)
 
-## Local Setup
+## Kubernets
+### Create
+```
+kubectl create -f k8.yml
+```
+
+### Update
+```
+kubectl apply  -f k8.yml
+```
+
+### Kubernets Dashboard
+
+
+#### Create User and get token
+```
+kubectl apply -f k8-dashboard/dashboard-adminuser.yaml
+
+kubectl -n kubernetes-dashboard describe secret $(kubectl -n kubernetes-dashboard get secret | grep admin-user | awk '{print $1}')
+
+```
+
+#### Access dashboard
+```
+http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/#/login
+```
+
+## Kompose
+Convert docker-compose file to kubernets configuration
+
+### Install Kompose
+```
+Follow steps from below
+https://github.com/kubernetes/kompose
+```
+
+
+### Convert docker-compose file to k8 menifest
+```
+~ kompose convert                                                                                                             ✔  939  12:08:18
+
+INFO Kubernetes file "database-service.yaml" created
+INFO Kubernetes file "kafka-service.yaml" created
+INFO Kubernetes file "task-service-service.yaml" created
+INFO Kubernetes file "zookeeper-service.yaml" created
+INFO Kubernetes file "database-deployment.yaml" created
+INFO Kubernetes file "database-claim0-persistentvolumeclaim.yaml" created
+INFO Kubernetes file "kafka-deployment.yaml" created
+INFO Kubernetes file "kafka-claim0-persistentvolumeclaim.yaml" created
+INFO Kubernetes file "knapsack-service-deployment.yaml" created
+INFO Kubernetes file "task-service-deployment.yaml" created
+INFO Kubernetes file "zookeeper-deployment.yaml" created
+```
+
+### Start K8 artifacts 
+```
+All the files in a directory can be started at once
+kubectl create -f k8-configs
+```
+
+## Troubleshoot
 ### Access kafka from outside docker
 ```
 Docker for Mac (native)
@@ -208,13 +264,7 @@ docker tag knapsack-service:latest bhanuchaddha/knapsack-service:latest
 docker push bhanuchaddha/knapsack-service:latest
 ```
 
-## Kubernets
-### Create
-```
-kubectl create -f k8.yml
-```
-
-### Update
-```
-kubectl apply  -f k8.yml
-```
+## Reference
+### Kafka
+https://dev.to/thegroo/one-to-run-them-all-1mg6
+[Kafka Listener Explained](https://rmoff.net/2018/08/02/kafka-listeners-explained/)
