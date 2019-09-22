@@ -1,0 +1,32 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.17.0 (a74acad)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: task-service
+  name: task-service
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: task-service
+    spec:
+      containers:
+      - env:
+        - name: KAFKA_URL
+          value: kafka:9092
+        - name: MONGODB_URI
+          value: mongodb://database:27017/mydb
+        image: bhanuchaddha/task-service:latest
+        name: task-service
+        ports:
+        - containerPort: 6543
+        resources: {}
+      restartPolicy: Always
+status: {}
