@@ -212,6 +212,16 @@ kubectl -n kubernetes-dashboard describe secret $(kubectl -n kubernetes-dashboar
 http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/#/login
 ```
 
+#### Scale Application
+```
+kubectl scale deployments/task-service --replicas=4
+```
+
+#### Rolling Update
+```
+kubectl set image deployment/task-service task-service=bhanuchaddha/task-service:2.0
+```
+
 ## Kompose
 Convert docker-compose file to kubernets configuration
 
